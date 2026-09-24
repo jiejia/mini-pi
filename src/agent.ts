@@ -1,10 +1,5 @@
 import "dotenv/config";
-
-
-type ChatMessage = {
-  role: "system" | "user" | "assistant";
-  content: string | null;
-};
+import type {Message, ToolCall} from "./types.js"
 
 const apiKey = process.env.OPENAI_API_KEY;
 const model = process.env.OPENAI_MODEL ?? "gpt-5.6-luna";
@@ -14,14 +9,14 @@ if (!apiKey) {
   throw new Error("请先设置 OPENAI_API_KEY 环境变量");
 }
 
-async function callLLM(messages: ChatMessage[]) {
+async function callLLM(messages: Message[]) {
   const response = await fetch(baseUrl +"/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ model, messages }),
+    body: JSON.stringify({ "model": model, "messages": messages }),
   });
 
   if (!response.ok) {
@@ -34,8 +29,11 @@ async function callLLM(messages: ChatMessage[]) {
 }
 
 export async function agentLoop(userMessage: string) {
-  const messages: ChatMessage[] = [
-    { role: "user", content: userMessage },
+  const messages: Message[] = [
+    {
+      role: "user",
+      content: userMessage,
+    },
   ];
 
   while (true) {
@@ -50,6 +48,7 @@ export async function agentLoop(userMessage: string) {
       role: "assistant",
       content: text,
     });
+
     console.log("LLM:", text);
 
     // 目前没有工具，因此这一轮结束。
