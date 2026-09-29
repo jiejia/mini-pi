@@ -16,3 +16,22 @@ export type Message =
       tool_calls?: ToolCall[];
     }
   | { role: "tool"; tool_call_id: string; content: string };
+
+
+export type Tool = {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  execute(args: Record<string, unknown>): Promise<string>;
+};
+
+export type LLMResponse = {
+  message: Extract<Message, { role: "assistant" }>;
+};
+
+export interface LLM {
+  chat(
+    messages: Message[],
+    tools: Tool[],
+  ): Promise<LLMResponse>;
+}

@@ -1,57 +1,89 @@
-import "dotenv/config";
-import type {Message, ToolCall} from "./types.js"
+import type { LLM, Message, Tool } from "./types.js";
 
-const apiKey = process.env.OPENAI_API_KEY;
-const model = process.env.OPENAI_MODEL ?? "gpt-5.6-luna";
-const baseUrl = process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1";
+const SYSTEM_PROMPT = `
+You are Mini Pi, a coding agent.
 
-if (!apiKey) {
-  throw new Error("请先设置 OPENAI_API_KEY 环境变量");
-}
+You are running inside the user's project directory.
 
-async function callLLM(messages: Message[]) {
-  const response = await fetch(baseUrl +"/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ "model": model, "messages": messages }),
-  });
+You can inspect and modify files using tools.
 
-  if (!response.ok) {
-    throw new Error(`LLM 请求失败：${response.status} ${await response.text()}`);
+Rules:
+
+- Read files before modifying them.
+- Prefer small, targeted edits.
+- Explain what you changed.
+- Do not invent tool results.
+- Use bash when necessary.
+`;
+
+export class Agent {
+  private readonly messages: Message[];
+
+  constructor(
+      private readonly llm: LLM,
+      private readonly tools: Tool[],
+      systemPrompt = SYSTEM_PROMPT,
+  ) {
+    this.messages = [
+      { role: "system", content: systemPrompt },
+    ];
   }
 
-  return (await response.json()) as {
-    choices: Array<{ message: { role: "assistant"; content: string | null } }>;
-  };
-}
-
-export async function agentLoop(userMessage: string) {
-  const messages: Message[] = [
-    {
+  async prompt(userInput: string): Promise<void> {
+    this.messages.push({
       role: "user",
-      content: userMessage,
-    },
-  ];
-
-  while (true) {
-    const response = await callLLM(messages);
-    const assistantMessage = response.choices[0]?.message;
-    if (!assistantMessage) {
-      throw new Error("LLM 没有返回有效的 assistant message");
-    }
-    const text = assistantMessage.content ?? "";
-
-    messages.push({
-      role: "assistant",
-      content: text,
+      content: userInput,
     });
 
-    console.log("LLM:", text);
+    while (true) {
+      const response = await this.llm.chat(this.messages, this.tools);
+      const assistantMessage = response.message;
 
-    // 目前没有工具，因此这一轮结束。
-    break;
+      this.messages.push(assistantMessage);
+
+      if (assistantMessage.content) {
+        console.log(assistantMessage.content);
+      }
+
+      if (!assistantMessage.tool_calls?.length) {
+        break;
+      }
+
+      for (const call of assistantMessage.tool_calls) {
+        const tool = this.tools.find(
+            (tool) => tool.name === call.function.name,
+        );
+
+        if (!tool) {
+          this.messages.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: `Unknown 【tool]: ${call.function.name} [args] ${call.function.arguments}`,
+          });
+          continue;
+        }
+
+        console.log(`[tool] ${call.function.name} [args] ${call.function.arguments}`);
+
+        try {
+          const args = JSON.parse(call.function.arguments) as Record<string, unknown>;
+          const result = await tool.execute(args);
+
+          this.messages.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: result,
+          });
+        } catch (error) {
+          this.messages.push({
+            role: "tool",
+            tool_call_id: call.id,
+            content: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    }
+
+
   }
 }
