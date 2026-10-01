@@ -22,10 +22,9 @@ export class Agent {
   constructor(
       private readonly llm: LLM,
       private readonly tools: Tool[],
-      systemPrompt = SYSTEM_PROMPT,
   ) {
     this.messages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: SYSTEM_PROMPT },
     ];
   }
 
