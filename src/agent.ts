@@ -1,20 +1,28 @@
 import type { LLM, Message, Tool } from "./types.js";
+import { readFile } from "node:fs/promises";
 
-const SYSTEM_PROMPT = `
+export async function loadProjectInstructions(): Promise<string> {
+  try {
+    return await readFile("AGENTS.md", "utf8");
+  } catch (error: any) {
+    if (error.code === "ENOENT") {
+      return "";
+    }
+
+    throw error;
+  }
+}
+
+const instructions = await loadProjectInstructions();
+
+const systemPrompt = `
 You are Mini Pi, a coding agent.
 
-You are running inside the user's project directory.
-
-You can inspect and modify files using tools.
-
-Rules:
-
-- Read files before modifying them.
-- Prefer small, targeted edits.
-- Explain what you changed.
-- Do not invent tool results.
-- Use bash when necessary.
+Project instructions:
+${instructions || "No AGENTS.md found."}
 `;
+
+
 
 export class Agent {
   private readonly messages: Message[];
