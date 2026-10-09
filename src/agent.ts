@@ -32,7 +32,7 @@ export class Agent {
       private readonly tools: Tool[],
   ) {
     this.messages = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
     ];
   }
 
