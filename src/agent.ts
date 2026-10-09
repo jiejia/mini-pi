@@ -1,5 +1,6 @@
 import type { LLM, Message, Tool } from "./types.js";
 import { readFile } from "node:fs/promises";
+import {sessionManager} from "./session-manager.ts";
 
 export async function loadProjectInstructions(): Promise<string> {
   try {
@@ -36,13 +37,17 @@ export class Agent {
     ];
   }
 
-  async prompt(userInput: string): Promise<void> {
+  async prompt(userInput: string, sessionId: string): Promise<void> {
     this.messages.push({
       role: "user",
       content: userInput,
     });
 
     while (true) {
+      // save sessions
+      sessionManager.save(sessionId, this.messages);
+
+
       const response = await this.llm.chat(this.messages, this.tools);
       const assistantMessage = response.message;
 

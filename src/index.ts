@@ -13,6 +13,10 @@ console.log("Mini Pi v0.1");
 console.log("Type /exit to quit.");
 console.log();
 
+const sessionId = crypto.randomUUID();
+
+console.log("Session ID: " + sessionId);
+
 try {
     while (true) {
         const userInput = await rl.question("You: ");
@@ -25,7 +29,7 @@ try {
             break;
         }
 
-        await agent.prompt(userInput);
+        await agent.prompt(userInput, sessionId);
         console.log();
     }
 } finally {
