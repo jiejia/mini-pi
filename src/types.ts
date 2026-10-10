@@ -29,9 +29,14 @@ export type LLMResponse = {
   message: Extract<Message, { role: "assistant" }>;
 };
 
+export type TextDeltaHandler = (
+    delta: string,
+) => void | Promise<void>;
+
 export interface LLM {
   chat(
     messages: Message[],
     tools: Tool[],
+    onTextDelta?: TextDeltaHandler,
   ): Promise<LLMResponse>;
 }

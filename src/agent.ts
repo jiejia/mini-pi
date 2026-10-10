@@ -44,11 +44,20 @@ export class Agent {
     });
 
     while (true) {
+
+      // const response = await this.llm.chat(this.messages, this.tools);
+
+      const response = await this.llm.chat(this.messages, this.tools, (delta) => {
+        // 用 stdout.write 而不是 console.log：后者每次都会换行，文字会被拆成一行一行
+        process.stdout.write(delta);
+      });
+
+      // 流式输出结束后补一个换行，让后续输出另起一行
+      process.stdout.write("\n");
+
       // save sessions
-      sessionManager.save(sessionId, this.messages);
-
-
-      const response = await this.llm.chat(this.messages, this.tools);
+      await sessionManager.save(sessionId, this.messages);
+      
       const assistantMessage = response.message;
 
       this.messages.push(assistantMessage);
