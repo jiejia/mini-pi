@@ -1,5 +1,6 @@
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { sessionManager } from "./session-manager.ts";
 
 import { Agent } from "./agent.ts";
 import { tools } from "./tools/index.ts";
@@ -13,7 +14,7 @@ console.log("Mini Pi v0.1");
 console.log("Type /exit to quit.");
 console.log();
 
-const sessionId = crypto.randomUUID();
+let sessionId = crypto.randomUUID();
 
 console.log("Session ID: " + sessionId);
 
@@ -27,6 +28,26 @@ try {
 0
         if (userInput === "/exit") {
             break;
+        } else if (userInput === "/help") {
+            console.log(`
+Commands:
+  /help     Show this help
+  /clear    Clear the current context
+  /exit     Exit Mini Pi
+  /model    Show the current model
+  /session  Show the current session
+`);
+            continue;
+        } else if (userInput === "/clear") {
+            sessionId = crypto.randomUUID();
+            console.log("Session ID: " + sessionId);
+            continue;
+        } else if (userInput === "/model") {
+
+        } else if (userInput === "/session") {
+            const sessions = await sessionManager.list();
+            sessions.map((session) => console.log(session));
+            continue;
         }
 
         await agent.prompt(userInput, sessionId);
