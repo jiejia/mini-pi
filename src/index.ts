@@ -15,6 +15,7 @@ console.log("Type /exit to quit.");
 console.log();
 
 let sessionId = crypto.randomUUID();
+let currentModel = process.env.OPENAI_MODEL
 
 console.log("Session ID: " + sessionId);
 
@@ -25,7 +26,7 @@ try {
         if (!userInput.trim()) {
             continue;
         }
-0
+
         if (userInput === "/exit") {
             break;
         } else if (userInput === "/help") {
@@ -36,23 +37,38 @@ Commands:
   /exit     Exit Mini Pi
   /model    Show the current model
   /session  Show the current session
+  /models    Show all models
+  /sessions  Show all sessions
 `);
             continue;
         } else if (userInput === "/clear") {
             sessionId = crypto.randomUUID();
             console.log("Session ID: " + sessionId);
             continue;
-        } else if (userInput === "/model") {
+        } else if (userInput === "/models") {
+            let models = await llm.models()
 
-        } else if (userInput === "/session") {
+            models.map((model) => console.log(model));
+
+            continue;
+
+        } else if (userInput === "/sessions") {
             const sessions = await sessionManager.list();
             sessions.map((session) => console.log(session));
+            continue;
+        }  else if (userInput === "/model") {
+            console.log(currentModel);
+            continue;
+        } else if (userInput === "/session") {
+            console.log(sessionId);
             continue;
         }
 
         await agent.prompt(userInput, sessionId);
         console.log();
     }
+} catch (error) {
+    console.error("error:", error instanceof Error ? error.message : error);
 } finally {
     rl.close();
 }

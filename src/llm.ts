@@ -181,4 +181,23 @@ export class OpenAICompatibleLLM implements LLM {
         };
 
     }
+
+    async models(): Promise<string[]> {
+        const response = await fetch(`${this.baseUrl}/models`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.apiKey}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`LLM 请求失败：${response.status} ${await response.text()}`);
+        }
+
+        const data = await response.json();
+
+        // 假设返回的 JSON 结构是 { data: [ { id: "model1" }, { id: "model2" } ] }
+        return data.data.map((model: { id: string }) => model.id);
+    }
 }
