@@ -1,6 +1,8 @@
 import type { LLM, Message, Tool } from "./types.js";
 import { readFile } from "node:fs/promises";
 import {sessionManager} from "./session-manager.ts";
+import emitter from './event.ts';
+
 
 export async function loadProjectInstructions(): Promise<string> {
   try {
@@ -47,6 +49,9 @@ export class Agent {
 
       // const response = await this.llm.chat(this.messages, this.tools);
 
+      emitter.emit('llm-respond', { messages: this.messages, tools: this.tools });
+
+
       const response = await this.llm.chat(this.messages, this.tools, (delta) => {
         // 用 stdout.write 而不是 console.log：后者每次都会换行，文字会被拆成一行一行
         process.stdout.write(delta);
@@ -83,6 +88,8 @@ export class Agent {
           });
           continue;
         }
+
+        emitter.emit('llm-tool-call', { call });
 
         console.log(`[tool] ${call.function.name} [args] ${call.function.arguments}`);
 
