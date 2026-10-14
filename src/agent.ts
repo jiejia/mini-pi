@@ -49,12 +49,9 @@ export class Agent {
 
       // const response = await this.llm.chat(this.messages, this.tools);
 
-      emitter.emit('llm-respond', { messages: this.messages, tools: this.tools });
-
-
       const response = await this.llm.chat(this.messages, this.tools, (delta) => {
         // 用 stdout.write 而不是 console.log：后者每次都会换行，文字会被拆成一行一行
-        process.stdout.write(delta);
+        emitter.emit('agent.prompt.llm.chat', delta);
       });
 
       // 流式输出结束后补一个换行，让后续输出另起一行
@@ -89,9 +86,9 @@ export class Agent {
           continue;
         }
 
-        emitter.emit('llm-tool-call', { call });
+        emitter.emit('agent.prompt.tool_call.after', call.function.name, call.function.arguments);
 
-        console.log(`[tool] ${call.function.name} [args] ${call.function.arguments}`);
+        // console.log(`[tool] ${call.function.name} [args] ${call.function.arguments}`);
 
         try {
           const args = JSON.parse(call.function.arguments) as Record<string, unknown>;
