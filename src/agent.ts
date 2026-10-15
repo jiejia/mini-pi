@@ -54,15 +54,18 @@ export class Agent {
         emitter.emit('agent.prompt.llm.chat', delta);
       });
 
-      // 流式输出结束后补一个换行，让后续输出另起一行
-      process.stdout.write("\n");
+      emitter.emit('agent.prompt.llm.chat.newline');
+
 
       // save sessions
-      await sessionManager.save(sessionId, this.messages);
+      // await sessionManager.save(sessionId, this.messages);
       
       const assistantMessage = response.message;
 
       this.messages.push(assistantMessage);
+
+      emitter.emit('agent.prompt.llm.chat.after', sessionId,  this.messages);
+
 
       if (assistantMessage.content) {
         console.log(assistantMessage.content);
@@ -108,7 +111,5 @@ export class Agent {
         }
       }
     }
-
-
   }
 }
