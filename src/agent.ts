@@ -67,9 +67,9 @@ export class Agent {
       emitter.emit('agent.prompt.llm.chat.after', sessionId,  this.messages);
 
 
-      if (assistantMessage.content) {
-        console.log(assistantMessage.content);
-      }
+      // if (assistantMessage.content) {
+      //   console.log(assistantMessage.content);
+      // }
 
       if (!assistantMessage.tool_calls?.length) {
         break;

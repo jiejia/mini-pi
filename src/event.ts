@@ -17,7 +17,7 @@ const listeners: listenersType = {
         (delta:string) => process.stdout.write(delta),
      ],
     'agent.prompt.llm.chat.newline': [
-        (delta:string) => process.stdout.write("\n"),
+        () => process.stdout.write("\n"),
     ],
     'agent.prompt.llm.chat.after': [
         (sessionId:string, messages:Message[]) => sessionManager.save(sessionId, messages).catch((error) => {
